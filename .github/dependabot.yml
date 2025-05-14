@@ -1,0 +1,8 @@
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    # リポジトリのルートを"/"とした場合のDockerfileのパス
+    directory: "/"
+    schedule:
+      # 監視の頻度は週ごとに設定
+      interval: "weekly"
