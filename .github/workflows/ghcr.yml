@@ -51,8 +51,10 @@ jobs:
             include:
               - platform: linux/amd64
                 runner: ubuntu-24.04
+                tag_suffix: amd64
               - platform: linux/arm64
                 runner: ubuntu-24.04-arm
+                tag_suffix: arm64
         runs-on: ${{ matrix.runner }}
         name: イメージビルド(${{ matrix.platform }})
         needs: 
@@ -83,13 +85,35 @@ jobs:
             push: ${{ needs.test_act.outputs.act != 'true' }}
             load: ${{ needs.test_act.outputs.act == 'true' }}
             tags: |
-                ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}
-                ghcr.io/${{ github.repository }}:latest
+                ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}-${{ matrix.tag_suffix }}
             platforms: ${{ matrix.platform }}
+            # unknown/unknown対策
+            provenance: false
             build-args: |
                 # ビルド時に必要な引数を指定します。
                 # ここでは、シリアル番号をARGとして渡しています。
                 SERIAL=${{ needs.make_serial.outputs.serial }}
-
+    create_manifest:
+        name: マニフェストの作成
+        runs-on: ubuntu-latest
+        needs: 
+            - build
+            - make_serial
+        steps:
+        - name: Dockerのログイン
+          uses: docker/login-action@v3
+          with:
+            registry: ghcr.io
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+        - name: マニフェストの作成
+          run: |
+            # マニフェストの作成を行います。
+            # ここでは、linux/amd64とlinux/arm64のイメージをまとめて1つのマニフェストにします。
+            docker manifest create ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }} \
+            ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}-amd64 \
+            ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}-arm64
+            # マニフェストのプッシュを行います。
+            docker manifest push ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}
                 
             
