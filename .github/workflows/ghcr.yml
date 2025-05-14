@@ -123,5 +123,23 @@ jobs:
             # マニフェストのプッシュを行います。
             docker manifest push ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}
             docker manifest push ghcr.io/${{ github.repository }}:latest
-                
-            
+    clean:
+        # actで実行していたときは、作ったローカルイメージは削除しておきます
+        name: ローカルイメージの削除
+        needs: 
+            - build
+            - make_serial
+            - test_act
+        if: ${{ needs.test_act.outputs.act == 'true' }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 1
+        steps:
+          - name: イメージの削除
+            run: |
+              # actで実行していたときは、作ったローカルイメージは削除しておきます
+              docker rmi ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}-amd64 || true
+              docker rmi ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}-arm64 || true
+              # actで実行しているときはアーキテクチャ名の付かないシリアルタグはできないはずですが念のため
+              docker rmi ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }} || true
+              docker image prune -f
+
