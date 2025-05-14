@@ -16,9 +16,15 @@ permissions:
 env:
     ACT: false
 
+
+# 並列起動を防ぐため、最後の作業のみ動くようにする
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
     make_serial:
         runs-on: ubuntu-latest
+        timeout-minutes: 1
         outputs:
           serial: ${{ steps.serial.outputs.serial }}
         steps:
@@ -40,6 +46,7 @@ jobs:
         runs-on: ${{ matrix.runner }}
         name: イメージビルド(${{ matrix.platform }})
         needs: make_serial
+        timeout-minutes: 5
         # amd64とarm64のビルドのため、ストラテジーを設定
         # それぞれ使用するランナーはubuntu-24.04およびubuntu-24.04-arm64とする
         steps:
