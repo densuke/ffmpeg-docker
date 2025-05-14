@@ -13,15 +13,25 @@ permissions:
   packages: write
   id-token: write
 
-env:
-    ACT: false
-
-
 # 並列起動を防ぐため、最後の作業のみ動くようにする
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+    # actかどうかを確認するためのチェックジョブ
+    test_act:
+        runs-on: ubuntu-latest
+        outputs:
+          act: ${{ steps.act.outputs.act }}
+        steps:
+        - name: actかどうかを確認
+          id: act
+          run: |
+            if [ -n "$ACT" ]; then
+              echo "act=true" >> $GITHUB_OUTPUT
+            else
+              echo "act=false" >> $GITHUB_OUTPUT
+            fi
     make_serial:
         runs-on: ubuntu-latest
         timeout-minutes: 1
@@ -45,7 +55,9 @@ jobs:
                 runner: ubuntu-24.04-arm
         runs-on: ${{ matrix.runner }}
         name: イメージビルド(${{ matrix.platform }})
-        needs: make_serial
+        needs: 
+            - make_serial
+            - test_act
         timeout-minutes: 5
         # amd64とarm64のビルドのため、ストラテジーを設定
         # それぞれ使用するランナーはubuntu-24.04およびubuntu-24.04-arm64とする
@@ -68,8 +80,8 @@ jobs:
           uses: docker/build-push-action@v3
           with:
             context: .
-            push: ${{ env.ACT != 'false' }}
-            load: ${{ env.ACT == 'false' }}
+            push: ${{ needs.test_act.outputs.act != 'true' }}
+            load: ${{ needs.test_act.outputs.act == 'true' }}
             tags: |
                 ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}
                 ghcr.io/${{ github.repository }}:latest
