@@ -23,6 +23,7 @@ jobs:
         runs-on: ubuntu-latest
         outputs:
           act: ${{ steps.act.outputs.act }}
+        timeout-minutes: 1
         steps:
         - name: actかどうかを確認
           id: act
@@ -96,9 +97,12 @@ jobs:
     create_manifest:
         name: マニフェストの作成
         runs-on: ubuntu-latest
+        timeout-minutes: 1
         needs: 
             - build
             - make_serial
+            - test_act
+        if: ${{ needs.test_act.outputs.act != 'true' }}
         steps:
         - name: Dockerのログイン
           uses: docker/login-action@v3
