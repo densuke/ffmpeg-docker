@@ -113,7 +113,11 @@ jobs:
             docker manifest create ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }} \
             ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}-amd64 \
             ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}-arm64
+            docker manifest create ghcr.io/${{ github.repository }}:latest \
+            ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}-amd64 \
+            ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}-arm64
             # マニフェストのプッシュを行います。
             docker manifest push ghcr.io/${{ github.repository }}:${{ needs.make_serial.outputs.serial }}
+            docker manifest push ghcr.io/${{ github.repository }}:latest
                 
             
