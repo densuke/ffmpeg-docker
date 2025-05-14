@@ -25,7 +25,7 @@ jobs:
         - name: 日時のシリアル番号を作成(後でタグとして使います)
           id: serial
           run: |
-            echo "serial=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+            echo "serial=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
     build:
         strategy:
           fail-fast: true
