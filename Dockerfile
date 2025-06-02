@@ -1,4 +1,4 @@
-FROM alpine:3.21
+FROM alpine:3.22
 # 作業用ユーザーの作成
 ARG USER=worker
 ARG UID=1000
